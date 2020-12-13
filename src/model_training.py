@@ -322,13 +322,6 @@ if __name__ == '__main__':
 
     ['default', 'weighted_loss', 'train_sampler']
 
-    ['14_08_20_adelphocoris_male_female_all_previous',
-     '14_08_20_adelphocoris_general_classification_all_previous',
-     '17_09_20_adelphocoris_and_outgroup',
-     '13_10_20_stenus_general_classification',
-     '12_11_20_stenus_general_classification'
-     ]
-
      ResNets:
              'resnet18','resnet34', 'resnet50', 'resnet101', 'resnet152',
              'wide_resnet50_2', 'wide_resnet101_2', 'resnext50_32x4d', 'resnext101_32x8d'

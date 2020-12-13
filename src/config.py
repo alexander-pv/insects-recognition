@@ -1,11 +1,7 @@
 
 
 # Available datasets and lists should be placed here
-DATASETS_LIST = ['14_08_20_adelphocoris_male_female_all_previous',
-                 '14_08_20_adelphocoris_general_classification_all_previous',
-                 '17_09_20_adelphocoris_and_outgroup',
-                 '13_10_20_stenus_general_classification',
-                 '12_11_20_stenus_general_classification',
+DATASETS_LIST = [
                  'test_data'
                  ]
 # List of possible models for training
