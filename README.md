@@ -23,6 +23,7 @@ Available models out-of-the-box from the repo:
 
 Available tools out-of-the-box: 
 ['weighted_loss', 'train_sampler', 'default']
+
 ---
 You can learn about data preparation, 
 model training and testing in separate notebooks:
