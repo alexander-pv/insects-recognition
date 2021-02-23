@@ -61,7 +61,10 @@ class LimeExplainContainer:
 
     def generate_test_explanations(self, top_labels, num_features, hide_color=0, num_samples=2000,
                                    positive_only=False, hide_rest=False,
-                                   figsize=(10, 10), save_img=False):
+                                   figsize=(10, 10), save_img=False, folder_prefix='folder_prefix'):
+
+        if 'folder_prefix' not in os.listdir('../lime_results'):
+            os.mkdir(f'../lime_results/{folder_prefix}')
 
         for i in tqdm.tqdm(range(self.meta_dataset.shape[0])):
             row = self.meta_dataset.iloc[i]
@@ -94,7 +97,7 @@ class LimeExplainContainer:
             plt.imshow(img_boundry)
             if save_img:
                 sha1_hash = row['reg_img_path'].split('.')[0].split(os.sep)[-1]
-                fig.savefig(f'../lime_results/lime_local_explanation_{self.invert_class[class_label]}_{sha1_hash}.png')
+                fig.savefig(f'../lime_results/{folder_prefix}/lime_local_explanation_{self.invert_class[class_label]}_{sha1_hash}.png')
 
 
 class GradCamContainer:
@@ -122,7 +125,7 @@ class GradCamContainer:
         self.cwd = os.getcwd().replace('src', '')
         print('\nGradCamContainer init\n')
 
-    def visualize_layers(self, img, img_sha1, target_class, layer_min, layer_max):
+    def visualize_layers(self, img, img_sha1, target_class, layer_min, layer_max, folder_prefix):
 
         img_original = img.resize((self.resize, self.resize))
         img_tensor = torch.cuda.FloatTensor(np.expand_dims(self.transform_img(img), axis=0))
@@ -135,7 +138,8 @@ class GradCamContainer:
             save_class_activation_images(
                 img_original,
                 cam,
-                f'gcam_{self.invert_class[target_class]}_{self.model_name}_{img_sha1}_layer_{layer}'
+                f'gcam_{self.invert_class[target_class]}_{self.model_name}_{img_sha1}_layer_{layer}',
+                folder_prefix
             )
         else:
             for layer in range(layer_min, layer_max + 1):
@@ -144,10 +148,11 @@ class GradCamContainer:
                 save_class_activation_images(
                     img_original,
                     cam,
-                    f'gcam_{self.invert_class[target_class]}_{self.model_name}_{img_sha1}_layer_{layer}'
+                    f'gcam_{self.invert_class[target_class]}_{self.model_name}_{img_sha1}_layer_{layer}',
+                    folder_prefix
                 )
 
-    def generate_heatmaps(self, layer_min=0, layer_max=18, batch_size=4):
+    def generate_heatmaps(self, folder_prefix, layer_min=0, layer_max=18, batch_size=4, ):
 
         for i in tqdm.tqdm(range(self.meta_dataset.shape[0])):
             row = self.meta_dataset.iloc[i]
@@ -163,7 +168,7 @@ class GradCamContainer:
             print('Image: ', img_path)
             print(f'Class: {self.invert_class[class_label]}')
 
-            self.visualize_layers(img, img_sha1, class_label, layer_min, layer_max)
+            self.visualize_layers(img, img_sha1, class_label, layer_min, layer_max, folder_prefix)
 
 
 class RiseContainer(torch.nn.Module):
@@ -234,8 +239,8 @@ class RiseContainer(torch.nn.Module):
         sal = sal / N / self.p1
         return sal
 
-    def plot_rise_mask(self, img_original, class_id, rise_mask, sha1_hash, save_fig,
-                       figsize=(10, 10), fontsize=14, alpha=0.7):
+    def plot_rise_mask(self, img_original, class_id, rise_mask, sha1_hash, save_fig, folder_prefix,
+                       figsize=(10, 10), fontsize=14, alpha=0.7, ):
 
         fig = plt.figure(figsize=figsize)
         plt.axis('off')
@@ -243,10 +248,13 @@ class RiseContainer(torch.nn.Module):
         plt.imshow(img_original.resize(self.input_size))
         plt.imshow(rise_mask.cpu().numpy()[class_id], cmap='jet', alpha=alpha)
 
-        if save_fig:
-            fig.savefig(f'../rise_results/rise_local_explanation_{self.invert_class[class_id]}_{sha1_hash}.png')
+        if not os.path.exists(f'../rise_results/{folder_prefix}'):
+            os.makedirs(f'../rise_results/{folder_prefix}')
 
-    def get_rise_heatmap(self, img, class_id, sha1_hash, save_fig, n, s, p1):
+        if save_fig:
+            fig.savefig(f'../rise_results/{folder_prefix}/rise_local_explanation_{self.invert_class[class_id]}_{sha1_hash}.png')
+
+    def get_rise_heatmap(self, img, class_id, sha1_hash, save_fig, n, s, p1, folder_prefix):
         self.generate_masks(N=n, s=s, p1=p1)
         img_transformed = self.transform_img(img)
         img_tensor = torch.cuda.FloatTensor(np.expand_dims(img_transformed, axis=0))
@@ -255,9 +263,9 @@ class RiseContainer(torch.nn.Module):
         del self.masks
         torch.cuda.empty_cache()
 
-        self.plot_rise_mask(img, class_id, rise_mask, sha1_hash, save_fig)
+        self.plot_rise_mask(img, class_id, rise_mask, sha1_hash, save_fig, folder_prefix)
 
-    def generate_rise_heatmaps(self, save_fig=True, n=1000, s=8, p1=0.2):
+    def generate_rise_heatmaps(self, save_fig=True, n=1000, s=8, p1=0.2, folder_prefix='folder_prefix'):
 
         for i in tqdm.tqdm(range(self.meta_dataset.shape[0])):
             row = self.meta_dataset.iloc[i]
@@ -271,6 +279,6 @@ class RiseContainer(torch.nn.Module):
             sha1_hash = row['reg_img_path'].split('.')[0].split(os.sep)[-1]
             print('Image: ', row['reg_img_path'])
             print(f'Class: {self.invert_class[class_id]}')
-            self.get_rise_heatmap(img, class_id, sha1_hash, save_fig, n, s, p1)
+            self.get_rise_heatmap(img, class_id, sha1_hash, save_fig, n, s, p1, folder_prefix)
 
 

@@ -164,7 +164,7 @@ class CustomResize:
 
             # Resize with respect to aspect_ratio = width//height
             width, height = img.size
-            _asp_ratio = width / height
+            _asp_ratio = max(width//height, 1)
             new_width = self.size[0]
             new_height = int(new_width // _asp_ratio)
 

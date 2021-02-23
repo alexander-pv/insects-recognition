@@ -11,7 +11,6 @@ class NeptuneLogger:
     def __init__(self, kwargs):
         super(NeptuneLogger,  self).__init__()
         self.kwargs = kwargs
-        self.project_name = self.kwargs['project_name']
         self.params = self.kwargs['params']
         self.artifact_path = self.kwargs['artifact_path']
         self.image_path = self.kwargs['image_path']
@@ -20,7 +19,7 @@ class NeptuneLogger:
     def init_client(self):
         neptune.init(project_qualified_name=config.NEPTUNE_PROJECT_QUAL_NAME,
                      api_token=config.NEPTUNE_TOKEN)
-        print(f'[NeptuneLogger] Initiate. Project: {self.project_name}')
+        print(f'[NeptuneLogger] Initiate. Project: {config.NEPTUNE_PROJECT_QUAL_NAME}')
 
     def create_experiment(self):
         neptune.create_experiment(name=f"""exp_{self.kwargs['training_data_sha1']}""",

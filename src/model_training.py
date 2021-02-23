@@ -24,7 +24,7 @@ import neptune_logger
 import config
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)-8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S'
                     )
@@ -191,7 +191,7 @@ def make_experiment(model_name, dataset_name, imbalanced_tool):
         _train_shuffle = True
         _train_sampler = None
 
-    logger.debug(f"""Configuring data loaders. Using cpus for multiprocessing: {CONFIG['data']['num_workers']}.""")
+    logger.info(f"""Configuring data loaders. Using cpus for multiprocessing: {CONFIG['data']['num_workers']}.""")
     train_data_loader = DataLoader(train_dataset, batch_size=CONFIG['model']['batch_size'],
                                    shuffle=_train_shuffle, sampler=_train_sampler,
                                    num_workers=CONFIG['data']['num_workers'])
@@ -282,14 +282,14 @@ def make_experiment(model_name, dataset_name, imbalanced_tool):
                        'general_config': CONFIG
                        }
 
-    logger.debug(f'Training kwargs'.center(50, '='))
-    logger.debug(''.join(list(f'{k}: {v}\n' for k, v in training_kwargs.items())))
+    logger.info(f'Training kwargs'.center(50, '='))
+    logger.info(''.join(list(f'{k}: {v}\n' for k, v in training_kwargs.items())))
 
     weights_folder = os.path.join(os.getcwd(), 'weights',
                                   f"""pytorch_{CONFIG['model']['model_name']}_{train_data_hash}""")
 
     if config.USE_NEPTUNE:
-        logger.debug('Neptune logger is ON.')
+        logger.info('Neptune logger is ON.')
         # Сбор параметров для логгирования
         TOTAL_PARAMS = {'config': CONFIG,
                         'training_kwargs': training_kwargs,
@@ -306,13 +306,13 @@ def make_experiment(model_name, dataset_name, imbalanced_tool):
                           }
         neptune_class = neptune_logger.NeptuneLogger(neptune_kwargs)
     else:
-        logger.debug('Neptune logger is OFF.')
+        logger.info('Neptune logger is OFF.')
         neptune_class = None
 
     # Training
     model_train(nnet, training_kwargs, neptune_class=neptune_class)
 
-    logger.debug(f'Done: model_name: {model_name}, dataset: {dataset_name}, imbalanced_tool: {imbalanced_tool}')
+    logger.info(f'Done: model_name: {model_name}, dataset: {dataset_name}, imbalanced_tool: {imbalanced_tool}')
 
 
 if __name__ == '__main__':

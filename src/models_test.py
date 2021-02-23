@@ -27,7 +27,7 @@ import mobilenet_selector
 import config
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)-8s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S'
                     )
@@ -428,8 +428,32 @@ def test_model_external_data(model_name, dataset_name, external_dataset_name,
     else:
         df_general_report.to_csv('df_general_report_external_data.csv', index=False, mode='a')
 
+    INVERT_CLASS_DICT = {v: k for k, v in CLASS_DICT.items()}
+    y_true = []
+    y_pred = []
+    proba_list = []
+    img_sha1 = []
 
-def make_interpretable_plots(model_name, dataset_name, folder_to_evaluate, model_type):
+    for i, test_batch in enumerate(test_data_loader):
+        with torch.no_grad():
+            inputs, labels = test_batch['image'], test_batch['class']
+            inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
+            # Forward pass
+            outputs = nnet(inputs)
+            outputs_proba = F.softmax(outputs, dim=1)
+            max_proba, indicies = torch.max(outputs_proba, 1)
+
+            y_true.extend([INVERT_CLASS_DICT[x] for x in labels.cpu().numpy().tolist()])
+            y_pred.extend([INVERT_CLASS_DICT[x] for x in indicies.cpu().numpy().tolist()])
+            img_sha1.extend(test_batch['img_sha1'])
+            proba_list.extend(max_proba.cpu().numpy().tolist())
+
+    df_predictions = pd.DataFrame({'sha1': img_sha1, 'y_true': y_true, 'y_pred': y_pred, 'probability': proba_list})
+    df_predictions.to_csv(f'../df_test_predictions_{external_dataset_name}_{model_name}_{model_type}.csv', index=False)
+    logger.info(f'Saved: df_test_predictions_{external_dataset_name}_{model_name}_{model_type}.csv')
+
+
+def make_interpretable_plots(model_name, dataset_name, folder_to_evaluate, model_type, manual_images=[]):
     """
     make_interpretable_plots
     :param model_name:
@@ -514,7 +538,7 @@ def make_interpretable_plots(model_name, dataset_name, folder_to_evaluate, model
                                                                         std=config.IMG_NORMALIZE_STD)
                                        )
     train_transforms = torchvision.transforms.Compose(transform_list)
-    val_trainsforms = torchvision.transforms.Compose(default_transforms_list)
+    val_transforms = torchvision.transforms.Compose(default_transforms_list)
 
     # Set dictionaries for training, validation and testing
     TRAIN_DATASET_KWARGS = {'class_dict': CLASS_DICT,
@@ -530,7 +554,7 @@ def make_interpretable_plots(model_name, dataset_name, folder_to_evaluate, model
                               'val_size': config.TESTVAL_SIZE,
                               'test_size': config.TEST_SIZE_FROM_TESTVAL,  # Доля от val_size
                               'seed': config.SEED,
-                              'torch_transform': val_trainsforms,
+                              'torch_transform': val_transforms,
                               }
 
     models_last_layers = {'mobilenet_v2': 18,
@@ -578,6 +602,11 @@ def make_interpretable_plots(model_name, dataset_name, folder_to_evaluate, model
     assert len(weights_list) == 1
     weights_path = os.path.join(weights_folder, weights_list[0])
 
+    # Отбор отдельных изображений
+    assert type(manual_images) is list
+    if manual_images:
+        test_dataset.df_current_dataset = test_dataset.df_metadata[test_dataset.df_metadata['sha1'].isin(manual_images)]
+
     lime_container = model_explain.LimeExplainContainer(model=nnet,
                                                         resize=CONFIG['data']['resize_img'],
                                                         meta_dataset=test_dataset.df_current_dataset,
@@ -587,7 +616,9 @@ def make_interpretable_plots(model_name, dataset_name, folder_to_evaluate, model
     lime_container.generate_test_explanations(top_labels=config.LIME_TOP_LABELS,
                                               num_features=config.LIME_NUM_FEATURES,
                                               num_samples=config.LIME_NUM_SAMPLES,
-                                              save_img=config.LIME_SAVE_IMG)
+                                              save_img=config.LIME_SAVE_IMG,
+                                              folder_prefix=model_type
+                                              )
 
     gradcam_container = model_explain.GradCamContainer(model=nnet,
                                                        model_name=model_name,
@@ -597,7 +628,9 @@ def make_interpretable_plots(model_name, dataset_name, folder_to_evaluate, model
                                                        weights_path=weights_path,
                                                        device=DEVICE)
     gradcam_container.generate_heatmaps(layer_min=models_last_layers[model_name],
-                                        layer_max=models_last_layers[model_name])
+                                        layer_max=models_last_layers[model_name],
+                                        folder_prefix=model_type
+                                        )
 
     rise_container = model_explain.RiseContainer(model=nnet,
                                                  class_dict=CLASS_DICT,
@@ -607,12 +640,12 @@ def make_interpretable_plots(model_name, dataset_name, folder_to_evaluate, model
                                                  weights_path=weights_path,
                                                  device=DEVICE,
                                                  gpu_batch=config.RISE_GPU_BATCH)
-    rise_container.generate_rise_heatmaps()
+    rise_container.generate_rise_heatmaps(folder_prefix=model_type)
 
 
 def get_detailed_predictions(model_name, dataset_name, folder_to_evaluate, model_type):
 
-    logger.debug('\nGetting detailed test predictions\n')
+    logger.info('\nGetting detailed test predictions\n')
 
     assert dataset_name in config.DATASETS_LIST
     assert model_name in config.MODELS_LIST
@@ -764,7 +797,7 @@ def get_detailed_predictions(model_name, dataset_name, folder_to_evaluate, model
 
     df_predictions = pd.DataFrame({'sha1': img_sha1, 'y_true': y_true, 'y_pred': y_pred, 'probability': proba_list})
     df_predictions.to_csv(f'../df_test_predictions_{dataset_name}_{model_name}_{model_type}.csv', index=False)
-    logger.debug(f'Saved: df_test_predictions_{dataset_name}_{model_name}_{model_type}.csv')
+    logger.info(f'Saved: df_test_predictions_{dataset_name}_{model_name}_{model_type}.csv')
 
 
 def print_model_structure(model_name):
@@ -791,7 +824,7 @@ def print_model_structure(model_name):
                                           class_number=1,
                                           pretrained=CONFIG['model']['pretrained'],
                                           freeze_conv=CONFIG['model']['freeze_conv'])
-    logger.debug(nnet)
+    logger.info(nnet)
 
 
 if __name__ == '__main__':
@@ -799,28 +832,28 @@ if __name__ == '__main__':
     print_model_structure(model_name=config.TESTING_MODEL_NAME)
 
     if config.TESTING_ON_TEST_PART_OF_GENERAL_DATA:
-        for type, folder_name in config.TESTING_MODEL_WEIGHTS.items():
-            logger.debug(f'Model type: {type.upper()}')
+        for _type, folder_name in config.TESTING_MODEL_WEIGHTS.items():
+            logger.info(f'Model type: {_type.upper()}')
             test_model(model_name=config.TESTING_MODEL_NAME, dataset_name=config.TESTING_DATASET_NAME,
-                       folder_to_evaluate=folder_name, model_type=type)
+                       folder_to_evaluate=folder_name, model_type=_type)
 
     if config.TESTING_ON_EXTERNAL_DATA:
-        for type, folder_name in config.TESTING_MODEL_WEIGHTS.items():
-            logger.debug(f'Model type: {type.upper()}')
+        for _type, folder_name in config.TESTING_MODEL_WEIGHTS.items():
+            logger.info(f'Model type: {_type.upper()}')
             test_model_external_data(model_name=config.TESTING_MODEL_NAME,
                                      dataset_name=config.TESTING_DATASET_NAME,
                                      external_dataset_name=config.TESTING_EXTERNAL_DATASET_NAME,
-                                     folder_to_evaluate=folder_name, model_type=type)
+                                     folder_to_evaluate=folder_name, model_type=_type)
 
     if config.TESTING_INTERPRETABLE_PLOTS:
-        for type, folder_name in config.TESTING_MODEL_WEIGHTS.items():
-            logger.debug(f'Model type: {type.upper()}')
+        for _type, folder_name in config.TESTING_MODEL_WEIGHTS.items():
+            logger.info(f'Model type: {_type.upper()}')
             make_interpretable_plots(model_name=config.TESTING_MODEL_NAME, dataset_name=config.TESTING_DATASET_NAME,
-                                     folder_to_evaluate=folder_name, model_type=type)
+                                     folder_to_evaluate=folder_name, model_type=_type)
 
     if config.TESTING_DETAILED_TEST_PREDS:
-        for type, folder_name in config.TESTING_MODEL_WEIGHTS.items():
-            logger.debug(f'Model type: {type.upper()}')
+        for _type, folder_name in config.TESTING_MODEL_WEIGHTS.items():
+            logger.info(f'Model type: {_type.upper()}')
             get_detailed_predictions(model_name=config.TESTING_MODEL_NAME, dataset_name=config.TESTING_DATASET_NAME,
-                                     folder_to_evaluate=folder_name, model_type=type)
+                                     folder_to_evaluate=folder_name, model_type=_type)
 

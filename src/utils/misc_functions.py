@@ -47,26 +47,27 @@ def save_gradient_images(gradient, file_name):
     save_image(gradient, path_to_file)
 
 
-def save_class_activation_images(org_img, activation_map, file_name):
+def save_class_activation_images(org_img, activation_map, file_name, folder_prefix):
     """
         Saves cam activation map and activation map on the original image
     Args:
         org_img (PIL img): Original image
         activation_map (numpy arr): Activation map (grayscale) 0-255
         file_name (str): File name of the exported image
+        folder_prefix (str): Subfolder
     """
-    if not os.path.exists('../gradcam_results'):
-        os.makedirs('../gradcam_results')
+    if not os.path.exists(f'../gradcam_results/{folder_prefix}'):
+        os.makedirs(f'../gradcam_results/{folder_prefix}')
     # Grayscale activation map
     heatmap, heatmap_on_image = apply_colormap_on_image(org_img, activation_map, 'hsv')
     # Save colored heatmap
     # path_to_file = os.path.join('../gradcam_results', file_name+'_Cam_Heatmap.png')
     # save_image(heatmap, path_to_file)
     # Save heatmap on iamge
-    path_to_file = os.path.join('../gradcam_results', file_name+'_Cam_On_Image.png')
+    path_to_file = os.path.join(f'../gradcam_results/{folder_prefix}', file_name+'_Cam_On_Image.png')
     save_image(heatmap_on_image, path_to_file)
     # Save grayscale heatmap
-    path_to_file = os.path.join('../gradcam_results', file_name+'_Cam_Grayscale.png')
+    path_to_file = os.path.join(f'../gradcam_results/{folder_prefix}', file_name+'_Cam_Grayscale.png')
     save_image(activation_map, path_to_file)
 
 

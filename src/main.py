@@ -46,7 +46,8 @@ if __name__ == '__main__':
             logger.debug(f'Model type: {type.upper()}')
             models_test.make_interpretable_plots(model_name=config.TESTING_MODEL_NAME,
                                                  dataset_name=config.TESTING_DATASET_NAME,
-                                                 folder_to_evaluate=folder_name, model_type=type)
+                                                 folder_to_evaluate=folder_name,
+                                                 model_type=type)
 
     if config.TESTING_DETAILED_TEST_PREDS:
         for type, folder_name in config.TESTING_MODEL_WEIGHTS.items():
