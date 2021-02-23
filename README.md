@@ -42,6 +42,7 @@ You can also revise your trained models with interpretability methods during tes
 which was added here: Grad-CAM, LIME, RISE:
 
 Examples:
+
 ![LIME](pics/lime_example.png)
 ![Grad-CAM](pics/gradcam_example.png)
 ![RISE](pics/rise_example.png)
