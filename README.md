@@ -1,8 +1,10 @@
 ### Machine learning for image-based species identification: a case of alfalfa plant bugs
 
 ---
+
 This is a repository with code used in "Machine learning for image-based species identification: a case of alfalfa plant bugs" article.
 The model training experiments were based on PyTorch neural networks framework.
+
 ---
 Most of essential parameters are placed in `config.py`. For example:
 
