@@ -1,8 +1,7 @@
-### Machine learning for image-based species identification: a case of alfalfa plant bugs
 
----
-
-This is a repository with code used in "Machine learning for image-based species identification: a case of alfalfa plant bugs" article.
+This is a repository with code used in
+`"Machine learning for expert-level image-based identification of very similar species in the hyperdiverse insect groups like plant bugs (Insecta: Miridae)"` 
+article.\
 The model training experiments were based on PyTorch neural networks framework.
 
 ---
