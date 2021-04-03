@@ -40,7 +40,7 @@ separately or the whole process in `main.py`
 You can also revise your trained models with interpretability methods during tests 
 which was added here: Grad-CAM, LIME, RISE:
 
-Examples:
+Toy examples:
 
 ![LIME](pics/lime_example.png)
 ![Grad-CAM](pics/gradcam_example.png)
