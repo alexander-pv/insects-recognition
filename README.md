@@ -1,6 +1,6 @@
 
 This is a repository with code used in
-`"Machine learning for expert-level image-based identification of very similar species in the hyperdiverse insect groups like plant bugs (Insecta: Miridae)"` 
+`"Machine learning for expert-level image-based identification of very similar species in the hyperdiverse plant bug family Miridae (Hemiptera: Heteroptera)"` 
 article.\
 The model training experiments were based on PyTorch neural networks framework.
 
