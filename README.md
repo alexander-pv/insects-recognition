@@ -48,10 +48,12 @@ Toy examples:
 
 ### Citation
 
+```
 @article{popkov2022machine,
   title={Machine learning for expert-level image-based identification of very similar species in the hyperdiverse plant bug family Miridae (Hemiptera: Heteroptera)},
   author={Popkov, Alexander and Konstantinov, Fedor and Neimorovets, Vladimir and Solodovnikov, Alexey},
   journal={Systematic Entomology},
   publisher={Wiley Online Library}
 }
+```
 ---
